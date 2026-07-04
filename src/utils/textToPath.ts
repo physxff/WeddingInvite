@@ -1,6 +1,6 @@
 import * as opentype from "opentype.js";
 
-let fontPromise: Promise<opentype.Font> | null = null;
+let fontPromise: Promise<any> | null = null;
 
 async function loadFont() {
   if (!fontPromise) {
