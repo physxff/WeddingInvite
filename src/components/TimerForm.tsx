@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, FormEvent } from "react";
-import { motion } from "framer-motion";
+import { motion, useInView, useAnimation } from "framer-motion";
 
 function getTimeLeft() {
   const target = new Date("2026-08-26T15:30:00").getTime();
@@ -24,18 +24,32 @@ export default function RSVPSection() {
   useEffect(() => {
     const updateTimer = () => setTimeLeft(getTimeLeft());
     updateTimer();
-
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const sectionRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState("");
   const [attendance, setAttendance] = useState("");
   const [guests, setGuests] = useState("");
   const [wishes, setWishes] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const controls = useAnimation();
+
+  const isInView = useInView(ref, {
+    once: true,
+    margin: "-100px",
+  });
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start({
+        pathLength: 1,
+        transition: { duration: 2.5, ease: "easeInOut" },
+      });
+    }
+  }, [isInView, controls]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,7 +63,6 @@ export default function RSVPSection() {
       });
 
       const data = await response.json();
-
       if (!data.ok) throw new Error();
 
       setName("");
@@ -66,14 +79,14 @@ export default function RSVPSection() {
   };
 
   return (
-    <section ref={sectionRef} className="px-0 py-12 bg-white">
+    <section ref={ref} className="px-0 py-12 bg-white">
 
-      {/* 🔴 ЛЕНТА */}
-      <div className="relative flex items-center justify-center min-h-[45svh] md:min-h-[30vh] overflow-hidden">
+      {/* ЛЕНТА */}
+      <div className="relative flex items-center justify-center min-h-[45svh] overflow-hidden">
 
         <svg
-          viewBox="1550 -1400 9000 6000"
-          className="absolute left-1/2 top-1/2 h-[120%] w-[200%] -translate-x-1/2 -translate-y-1/2 pointer-events-none md:w-full"
+          viewBox="0 0 1000 400"
+          className="absolute inset-0 w-full h-full pointer-events-none"
           preserveAspectRatio="xMidYMid slice"
         >
           <motion.path
@@ -81,46 +94,35 @@ export default function RSVPSection() {
             fill="none"
             stroke="#c81d25"
             strokeLinecap="round"
-            initial={{
-              pathLength: 0,
-              opacity: 0,
-            }}
-            animate={{
-              pathLength: 1,
-              opacity: 1,
-            }}
-            transition={{
-              duration: 2.2,
-              ease: "easeInOut",
-            }}
+            strokeWidth={70}
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={controls}
           />
         </svg>
 
-        {/* таймер */}
-        <div className="px-6 py-12 relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
+        {/* ТАЙМЕР */}
+        <div className="relative z-10 px-6 py-12 text-center">
 
-            <p className="text-sm md:text-2xl uppercase tracking-[0.4em] text-neutral-700">
-              До свадьбы осталось
-            </p>
+          <p className="text-sm md:text-2xl uppercase tracking-[0.4em] text-neutral-700">
+            До свадьбы осталось
+          </p>
 
-            {!timeLeft ? (
-              <p className="mt-7 text-2xl">Загрузка...</p>
-            ) : (
-              <div className="mt-3 flex justify-center gap-6 text-2xl md:text-4xl font-light">
-                <div>{timeLeft.days} д</div>
-                <div>{timeLeft.hours} ч</div>
-                <div>{timeLeft.minutes} м</div>
-                <div>{timeLeft.seconds} с</div>
-              </div>
-            )}
-          </div>
+          {!timeLeft ? (
+            <p className="mt-7 text-2xl">Загрузка...</p>
+          ) : (
+            <div className="mt-3 flex justify-center gap-6 text-2xl md:text-4xl font-light">
+              <div>{timeLeft.days} д</div>
+              <div>{timeLeft.hours} ч</div>
+              <div>{timeLeft.minutes} м</div>
+              <div>{timeLeft.seconds} с</div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* форма */}
+      {/* ФОРМА */}
       <div className="px-6">
-        <div className="mx-auto mt-0 max-w-xl">
+        <div className="mx-auto max-w-xl">
 
           <h2 className="mb-10 text-center text-xl font-light md:text-2xl">
             Ваше присутствие — лучший подарок для нас.
@@ -129,17 +131,16 @@ export default function RSVPSection() {
           <form onSubmit={handleSubmit} className="space-y-6">
 
             <input
-              type="text"
-              placeholder="ФИО"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-black"
+              placeholder="ФИО"
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <select
               value={attendance}
               onChange={(e) => setAttendance(e.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-black"
+              className="w-full rounded-xl border px-4 py-3"
             >
               <option value="">Будете присутствовать?</option>
               <option value="Да">Да</option>
@@ -148,23 +149,21 @@ export default function RSVPSection() {
 
             <input
               type="number"
-              min={0}
               value={guests}
               onChange={(e) => setGuests(e.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-black"
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <textarea
-              placeholder="Пожелания"
-              rows={4}
               value={wishes}
               onChange={(e) => setWishes(e.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-black"
+              rows={4}
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <button
               type="submit"
-              className="w-full rounded-full bg-black py-4 text-white transition hover:opacity-80"
+              className="w-full rounded-full bg-black py-4 text-white"
             >
               {loading ? "Отправка..." : "Подтвердить присутствие"}
             </button>
