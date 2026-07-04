@@ -88,7 +88,7 @@ export default function RSVPSection() {
 
         <svg
           viewBox="1550 -1400 9000 6000"
-          className="absolute left-1/2 top-1/2 h-1/2 w-[180%] -translate-x-1/2 -translate-y-1/2 pointer-events-none md:w-full"
+          className="absolute left-1/2 top-1/2 h-full w-[180%] -translate-x-1/2 -translate-y-1/2 pointer-events-none md:w-full"
           preserveAspectRatio="xMidYMid slice"
         >
           <motion.path
