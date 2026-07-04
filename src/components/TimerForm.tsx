@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, FormEvent } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 function getTimeLeft() {
   const target = new Date("2026-08-26T15:30:00").getTime();
@@ -31,6 +31,16 @@ export default function RSVPSection() {
 
   const sectionRef = useRef<HTMLDivElement>(null);
 
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 80%", "center center"],
+  });
+
+  // 🔥 теперь реально используем scroll
+  const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const strokeWidth = useTransform(scrollYProgress, [0, 1], [20, 80]);
+  const opacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+
   const [name, setName] = useState("");
   const [attendance, setAttendance] = useState("");
   const [guests, setGuests] = useState("");
@@ -45,7 +55,12 @@ export default function RSVPSection() {
       const response = await fetch("/api/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, attendance, guests, wishes }),
+        body: JSON.stringify({
+          name,
+          attendance,
+          guests,
+          wishes,
+        }),
       });
 
       const data = await response.json();
@@ -59,7 +74,7 @@ export default function RSVPSection() {
 
       alert("Спасибо! Ваш ответ отправлен.");
     } catch (err) {
-      console.error(err);
+      console.error("❌ SEND API ERROR:", err);
     }
 
     setLoading(false);
@@ -68,12 +83,12 @@ export default function RSVPSection() {
   return (
     <section ref={sectionRef} className="px-0 py-12 bg-white">
 
-      {/* 🔴 ЛЕНТА */}
-      <div className="relative flex items-center justify-center min-h-[45svh] md:min-h-[30vh] overflow-hidden">
+      {/* 🔴 SVG ЛИНИЯ */}
+      <div className="relative flex items-center justify-center min-h-[40svh] md:min-h-[30vh]">
 
         <svg
           viewBox="1550 -1400 9000 6000"
-          className="absolute left-1/2 top-1/2 h-[120%] w-[200%] -translate-x-1/2 -translate-y-1/2 pointer-events-none md:w-full"
+          className="absolute left-1/2 top-1/2 h-full w-[180%] -translate-x-1/2 -translate-y-1/2 pointer-events-none md:w-full"
           preserveAspectRatio="xMidYMid slice"
         >
           <motion.path
@@ -81,25 +96,23 @@ export default function RSVPSection() {
             fill="none"
             stroke="#c81d25"
             strokeLinecap="round"
-            initial={{
-              pathLength: 0,
-              opacity: 0,
-            }}
-            animate={{
-              pathLength: 1,
-              opacity: 1,
-            }}
-            transition={{
-              duration: 2.2,
-              ease: "easeInOut",
+            style={{
+              pathLength,
+              strokeWidth,
+              opacity,
             }}
           />
         </svg>
 
         {/* таймер */}
         <div className="px-6 py-12 relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
-
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1 }}
+            className="mx-auto max-w-3xl text-center"
+          >
             <p className="text-sm md:text-2xl uppercase tracking-[0.4em] text-neutral-700">
               До свадьбы осталось
             </p>
@@ -114,14 +127,19 @@ export default function RSVPSection() {
                 <div>{timeLeft.seconds} с</div>
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* форма */}
       <div className="px-6">
-        <div className="mx-auto mt-0 max-w-xl">
-
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 1 }}
+          className="mx-auto mt-0 max-w-xl"
+        >
           <h2 className="mb-10 text-center text-xl font-light md:text-2xl">
             Ваше присутствие — лучший подарок для нас.
           </h2>
@@ -170,9 +188,8 @@ export default function RSVPSection() {
             </button>
 
           </form>
-        </div>
+        </motion.div>
       </div>
-
     </section>
   );
 }
