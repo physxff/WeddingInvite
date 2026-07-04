@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, FormEvent } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 function getTimeLeft() {
-  const target = new Date("2026-08-28T15:30:00").getTime();
+  const target = new Date("2026-08-26T15:30:00").getTime();
   const now = new Date().getTime();
   const diff = target - now;
 
